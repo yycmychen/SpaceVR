@@ -772,27 +772,49 @@ footer.site strong{color:var(--ink-2);}
     <div class="eyebrow">Immersive Experience</div>
     <h2 class="sec">VR 體驗 · 中國航天科普體驗館</h2>
     <p class="lede">純 VR 沉浸式專案，建基於 CoSpaces Edu 平台。支援 VR 眼鏡，亦可直接在手機、平板、電腦上遊玩。
+      你可以先看<strong style="color:var(--gold-2)">示範影片</strong>快速了解，再親自進入體驗。
       以下為 VR 中的四大核心體驗階段：</p>
   </div>
 
   <div class="stages" id="stageCards"></div>
 
+  <div class="mode-pick" id="vrPick">
+    <button class="mode" data-vr="video">
+      <span class="mi">🎬</span>
+      <span class="mt">觀看示範影片</span>
+      <span class="md">由我們帶你完整走一次四大體驗階段</span>
+      <span class="mb">建議先看這個</span>
+    </button>
+    <button class="mode" data-vr="live">
+      <span class="mi">🕶️</span>
+      <span class="mt">親自體驗 VR</span>
+      <span class="md">即時操作 · VR 眼鏡、手機、平板、電腦皆可</span>
+      <span class="mb">需要瀏覽器支援 WebGL</span>
+    </button>
+  </div>
+
   <div class="vr-frame">
-    <iframe id="vrIframe" src="https://edu.delightex.com/UAG-WGG"
-      title="中國航天VR科普體驗館"
+    <iframe id="vrVideo" title="中國航天VR科普體驗館 — 示範影片"
+      allow="autoplay; fullscreen" allowfullscreen></iframe>
+    <iframe id="vrIframe" title="中國航天VR科普體驗館" style="display:none;"
       allow="xr-spatial-tracking; gyroscope; accelerometer; fullscreen; microphone"
-      allowfullscreen loading="lazy"></iframe>
+      allowfullscreen></iframe>
   </div>
   <div class="btn-row">
-    <a class="btn primary" href="https://edu.delightex.com/UAG-WGG" target="_blank" rel="noopener">🕶️　在新分頁全螢幕開啟</a>
+    <a class="btn primary" id="vrOpen" href="#" target="_blank" rel="noopener"></a>
     <button class="btn ghost" id="vrHelpBtn">畫面載入不到？</button>
   </div>
   <div class="glass" id="vrHelp" style="display:none;margin-top:18px;">
     <h3 class="sub">排除疑難</h3>
-    <p style="font-size:12.5px;color:var(--ink-2);margin:0;">
+    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;">
+      <strong style="color:var(--gold-2);">即時體驗載入不到？</strong>
       此 VR 體驗需要瀏覽器支援 <strong>WebGL</strong>。若畫面空白：①改用 Chrome 或 Edge 最新版；
       ②在瀏覽器設定中開啟「使用硬件加速」；③按上方「在新分頁全螢幕開啟」直接進入原生頁面；
-      ④在部分校園網絡下 iframe 可能被封鎖，此時請用新分頁開啟。</p>
+      ④在部分校園網絡下 iframe 可能被封鎖，此時請用新分頁開啟，或改看示範影片。</p>
+    <p style="font-size:12.5px;color:var(--ink-2);margin:0;">
+      <strong style="color:var(--gold-2);">示範影片顯示不到？</strong>
+      影片存放於 Google 雲端硬碟，需要把共用權限設為<strong>「知道連結的任何人」</strong>才能在此播放。
+      若你看到要求登入的畫面，代表權限仍是私人；亦可按上方按鈕在新分頁開啟。</p>
   </div>
 
   <div class="glass" style="margin-top:26px;">
@@ -1355,6 +1377,33 @@ $('#stageCards').innerHTML = STAGES.map((s,i)=>`
 $('#vrHelpBtn').addEventListener('click',()=>{
   const h=$('#vrHelp'); h.style.display = h.style.display==='none' ? 'block' : 'none';
 });
+
+/* ─── VR 檢視模式：示範影片 ／ 即時體驗 ───
+   兩個 iframe 共用同一個畫框，同一時間只載入一個，避免同時佔用頻寬。 */
+const VR_LIVE  = 'https://edu.delightex.com/UAG-WGG';
+const VR_FILE  = '15nJfbj_dZTCL7byoN0yEbZHH_xNzrAV6';
+const VR_EMBED = `https://drive.google.com/file/d/${VR_FILE}/preview`;
+const VR_WATCH = `https://drive.google.com/file/d/${VR_FILE}/view`;
+
+function setVRMode(m){
+  const vid=$('#vrVideo'), live=$('#vrIframe'), open=$('#vrOpen');
+  $$('#vrPick .mode').forEach(b=>b.classList.toggle('on', b.dataset.vr===m));
+  if(m==='video'){
+    if(vid.src!==VR_EMBED) vid.src=VR_EMBED;
+    vid.style.display='block'; live.style.display='none';
+    open.href=VR_WATCH; open.textContent='🎬　在新分頁開啟示範影片';
+  }else{
+    vid.src='';                       // 停止影片播放，免得聲音蓋過 VR
+    if(live.src!==VR_LIVE) live.src=VR_LIVE;
+    live.style.display='block'; vid.style.display='none';
+    open.href=VR_LIVE; open.textContent='🕶️　在新分頁全螢幕開啟 VR';
+  }
+  DB.set('vrMode', m);
+}
+$('#vrPick').addEventListener('click', e=>{
+  const b=e.target.closest('[data-vr]'); if(b) setVRMode(b.dataset.vr);
+});
+setVRMode(DB.get('vrMode','video'));
 
 /* ════════════════ 航天歷程時間軸 ════════════════ */
 const TIMELINE=[
